@@ -60,5 +60,19 @@ int main(void){
   setup_fastPWM();
 
   while (1){
+    setDutyCycle(0);
+    _delay_ms(2000);
+
+    setDutyCycle(25);
+    _delay_ms(2000);
+
+    setDutyCycle(50);
+    _delay_ms(2000);
+
+    setDutyCycle(75);
+    _delay_ms(2000);
+
+    setDutyCycle(100);
+    _delay_ms(2000);
   }
 }
