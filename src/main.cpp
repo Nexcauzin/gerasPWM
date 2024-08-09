@@ -2,6 +2,7 @@
 #include <util/delay.h>
 
 uint16_t TOP;
+float throttleFrenteTras, throttleLateral, pwmLateral, pwmDireito, pwmEsquerdo;
 
 // Configura o PWM 
 void setupFastPWM(){
@@ -51,7 +52,7 @@ void setupFastPWM(){
 }
 
 // Atualiza o valor do Duty Cycle
-uint16_t setDutyCycle(int porcentPWM, int topValue){
+uint16_t setDutyCycle(float porcentPWM, int topValue){
   // Essa função lê valores de 0-100 e faz o Duty Cycle adotar esse valor
 
   // Isso é para limitar o valor mínimo do Duty Cycle
@@ -64,24 +65,84 @@ uint16_t setDutyCycle(int porcentPWM, int topValue){
     porcentPWM = 100;
   }
 
-  uint16_t dutyCycle = ((porcentPWM * (topValue + 1))/100) - 1; // Cálculo do ICR para % do Duty
+  uint16_t dutyCycle = ((porcentPWM * (topValue + 1))/100) - 1; // Cálculo para % do Duty
   return dutyCycle;
 }
 
+
+void comandoDireita(){
+
+}
 
 
 int main(void){
 
   setupFastPWM();
 
+  // Para o controle da direção do motor:
+  // MOTOR DIREITO (PD7(D7) -> IN1, PB0(D8) -> IN2)
+  // MOTOR ESQUERDO (PB4(D12) -> IN3, PB5(D13) -> IN4)
+
+  // TABELA VERDADE PARA O L298N:
+  // IN1    IN2    Motor
+  //  0      0     Parado
+  //  0      1     Frente
+  //  1      0     Ré
+  //  1      1     Parado
+
   while (1){
 
-    // Atualiza para o MOTOR DIREITO
-    OCR1A = setDutyCycle(75, TOP);
-    // Atualiza para o MOTOR ESQUERDO
-    OCR1B = setDutyCycle(0, TOP);
+    // Caberia um if aqui "freio de mão", puxando sinal de outro canal, se a condição
+    // é aceita, então IN[x] = 0, freio nos dois motores (colocava um "continue" pra operações)
 
-    _delay_ms(2000);
+    // COMANDO FRENTE/TRÁS
+    // Manete para FRENTE
+    if (throttleFrenteTras >= 50){
+      // Motor Direito
+      pwmDireito = (throttleFrenteTras - 50) * 2;
+      PORTB |= (1 << PB0);
+      PORTD &= ~(1 << PD7);
+
+      // Motor Esquerdo
+      pwmEsquerdo = (throttleFrenteTras - 50) * 2;
+      PORTB |= (1 << PB5);
+      PORTB &= ~(1 << PB4);
+    }
+    // Manete para TRÁS
+    else{
+      // Motor Direito
+      pwmDireito = (50 - throttleFrenteTras) * 2;
+      PORTB &= ~(1 << PB0);
+      PORTD |= (1 << PD7);
+
+      // Motor Esquerdo
+      pwmEsquerdo = (50 - throttleFrenteTras) * 2;
+      PORTB &= ~(1 << PB5);
+      PORTB |= (1 << PB4);
+    }
+
+
+    // COMANDO LATERAL
+    // Para ESQUERDA
+    if (throttleLateral < 50){
+      pwmLateral = (50 - throttleLateral) * 2;
+      pwmEsquerdo += pwmLateral;
+    }
+    // Para DIREITA
+    if (throttleLateral > 50){
+      pwmLateral = (throttleLateral - 50) * 2;
+      pwmDireito += pwmLateral;
+    }
+
+
+
+    // Atualiza para o MOTOR DIREITO
+    OCR1A = setDutyCycle(pwmDireito, TOP);
+
+    // Atualiza para o MOTOR ESQUERDO
+    OCR1B = setDutyCycle(pwmEsquerdo, TOP);
+
+    //_delay_ms(2000);
 
   }
 }
