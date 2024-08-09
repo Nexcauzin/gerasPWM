@@ -6,8 +6,8 @@ uint16_t TOP;
 void setup_fastPWM(){
   // Configurado para gerar no pino Digital 9 (OCR1A)
   // Está no Port D, bit PD6
-  // Configurando o pino OC1A (PD6) como saída
-  DDRD |= (1 << DDD6);
+  // Configurando o pino OC1A (PB1) como saída
+  DDRD |= (1 << DDB1);
 
   // Frequências possíveis com Fast PWM (N=Prescale)
   // f_pwm = f_clk/(N*256)
@@ -22,9 +22,12 @@ void setup_fastPWM(){
   //   1   0    1   ->   1024    -> 15,625 KHz
 
   // Configurando o Timer/Counter1 para Fast PWM
-  TCCR1B |= (1 << CS11);
+  TCCR1A |= (1 << WGM11 | 1 << COM1A1);
+  // Para colocar no modo não invertido, tem que setar o bit COM1A1
+  TCCR1B |= (1 << WGM13 | 1 << WGM12 | 1 << CS11);
   // Essa config trás a FREQUÊNCIA BASE do PWM, então dá pra alterar com o TOP qual vai ser
   // A freq final do pwm
+  // Lembra sempre de conferir o WGM1[x] para ver qual o modo do PWM
 
   // O TOP do PWM (IMPORTANTE ISSO HEIN) pode ser calculado como:
   // TOP = (f_clk/(N*f_pwm)) - 1
@@ -37,23 +40,26 @@ void setup_fastPWM(){
 
   // Deve ser sempre um valor INT
   ICR1 = 199; 
-  uint16_t TOP = ICR1; // Pra usar na função que altera o Duty Cycle
-  OCR1A = 0; 
+  TOP = ICR1; // Pra usar na função que altera o Duty Cycle
+  OCR1A = 0; // Iniciando com o Duty Cycle zerado
 }
 
 void setDutyCycle(int porcentPWM){
   // porcentPWM deve estar entre 0-100
   // Essa função lê valores de 0-100 e faz o Duty Cycle adotar esse valor
-  if (porcentPWM < 0){
+
+  // Isso é para limitar o valor mínimo do Duty Cycle
+  if (porcentPWM < 0){ 
     porcentPWM = 0;
   }
 
+  // Isso é para limitar o vlaor máximo do Duty Cycle
   if (porcentPWM > 100){
     porcentPWM = 100;
   }
 
   uint16_t dutyCycle = (porcentPWM * (TOP + 1))/100; // Cálculo do ICR para % do Duty
-  ICR1 = dutyCycle;
+  OCR1A = dutyCycle; // Atualizando o Duty Cycle
 }
 
 int main(void){
