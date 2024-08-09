@@ -70,11 +70,6 @@ uint16_t setDutyCycle(float porcentPWM, int topValue){
 }
 
 
-void comandoDireita(){
-
-}
-
-
 int main(void){
 
   setupFastPWM();
