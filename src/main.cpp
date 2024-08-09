@@ -7,7 +7,7 @@ void setup_fastPWM(){
   // Configurado para gerar no pino Digital 9 (OCR1A)
   // Está no Port D, bit PD6
   // Configurando o pino OC1A (PB1) como saída
-  DDRD |= (1 << DDB1);
+  DDRB |= (1 << DDB1);
 
   // Frequências possíveis com Fast PWM (N=Prescale)
   // f_pwm = f_clk/(N*256)
@@ -58,7 +58,7 @@ void setDutyCycle(int porcentPWM){
     porcentPWM = 100;
   }
 
-  uint16_t dutyCycle = (porcentPWM * (TOP + 1))/100; // Cálculo do ICR para % do Duty
+  uint16_t dutyCycle = ((porcentPWM * (TOP + 1))/100) - 1; // Cálculo do ICR para % do Duty
   OCR1A = dutyCycle; // Atualizando o Duty Cycle
 }
 
@@ -66,6 +66,7 @@ int main(void){
   setup_fastPWM();
 
   while (1){
+
     setDutyCycle(0);
     _delay_ms(2000);
 
@@ -74,7 +75,7 @@ int main(void){
 
     setDutyCycle(50);
     _delay_ms(2000);
-
+    
     setDutyCycle(75);
     _delay_ms(2000);
 
