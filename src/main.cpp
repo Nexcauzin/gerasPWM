@@ -39,7 +39,8 @@ void setup_fastPWM(){
   // Equivalendo a 10,416 KHz
 
   // Deve ser sempre um valor INT
-  ICR1 = 199; 
+  ICR1 = 199; // Prescaler de 8, gera o TOP 200-> PWM de 10KHz
+
   TOP = ICR1; // Pra usar na função que altera o Duty Cycle
   OCR1A = 0; // Iniciando com o Duty Cycle zerado
 }
