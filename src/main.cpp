@@ -3,11 +3,14 @@
 
 uint16_t TOP;
 
-void setup_fastPWM(){
+// Configura o PWM 
+void setupFastPWM(){
   // Configurado para gerar no pino Digital 9 (OCR1A)
-  // Está no Port D, bit PD6
+  // Está no Port B, bit PB1
   // Configurando o pino OC1A (PB1) como saída
   DDRB |= (1 << DDB1);
+  // Mesma coisa para o OC1B (PB2), que é o Digital 10
+  DDRB |= (1 << DDB2);
 
   // Frequências possíveis com Fast PWM (N=Prescale)
   // f_pwm = f_clk/(N*256)
@@ -22,8 +25,8 @@ void setup_fastPWM(){
   //   1   0    1   ->   1024    -> 15,625 KHz
 
   // Configurando o Timer/Counter1 para Fast PWM
-  TCCR1A |= (1 << WGM11 | 1 << COM1A1);
-  // Para colocar no modo não invertido, tem que setar o bit COM1A1
+  TCCR1A |= (1 << WGM11 | 1 << COM1A1 | 1 << COM1B1);
+  // Para colocar no modo não invertido, tem que setar o bit COM1A1 e COM1B1
   TCCR1B |= (1 << WGM13 | 1 << WGM12 | 1 << CS11);
   // Essa config trás a FREQUÊNCIA BASE do PWM, então dá pra alterar com o TOP qual vai ser
   // A freq final do pwm
@@ -41,11 +44,14 @@ void setup_fastPWM(){
   // Deve ser sempre um valor INT
   ICR1 = 199; 
   TOP = ICR1; // Pra usar na função que altera o Duty Cycle
-  OCR1A = 0; // Iniciando com o Duty Cycle zerado
+
+  // Iniciando com o Duty Cycle zerado
+  OCR1A = 0; 
+  OCR1B = 0; 
 }
 
-void setDutyCycle(int porcentPWM){
-  // porcentPWM deve estar entre 0-100
+// Atualiza o valor do Duty Cycle
+uint16_t setDutyCycle(int porcentPWM, int topValue){
   // Essa função lê valores de 0-100 e faz o Duty Cycle adotar esse valor
 
   // Isso é para limitar o valor mínimo do Duty Cycle
@@ -58,28 +64,24 @@ void setDutyCycle(int porcentPWM){
     porcentPWM = 100;
   }
 
-  uint16_t dutyCycle = ((porcentPWM * (TOP + 1))/100) - 1; // Cálculo do ICR para % do Duty
-  OCR1A = dutyCycle; // Atualizando o Duty Cycle
+  uint16_t dutyCycle = ((porcentPWM * (topValue + 1))/100) - 1; // Cálculo do ICR para % do Duty
+  return dutyCycle;
 }
 
+
+
 int main(void){
-  setup_fastPWM();
+
+  setupFastPWM();
 
   while (1){
 
-    setDutyCycle(0);
+    // Atualiza para o MOTOR DIREITO
+    OCR1A = setDutyCycle(75, TOP);
+    // Atualiza para o MOTOR ESQUERDO
+    OCR1B = setDutyCycle(0, TOP);
+
     _delay_ms(2000);
 
-    setDutyCycle(25);
-    _delay_ms(2000);
-
-    setDutyCycle(50);
-    _delay_ms(2000);
-    
-    setDutyCycle(75);
-    _delay_ms(2000);
-
-    setDutyCycle(100);
-    _delay_ms(2000);
   }
 }
