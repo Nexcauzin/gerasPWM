@@ -80,7 +80,7 @@ uint8_t setDutyCycle(float porcentPWM){
   // Isso é para limitar o valor mínimo do Duty Cycle
   porcentPWM = limitasValores(porcentPWM, 0, 1);
 
-  uint8_t dutyCycle = (uint8_t)((porcentPWM) * TOP);
+  uint8_t dutyCycle = porcentPWM * TOP;
   return dutyCycle;
 }
 
